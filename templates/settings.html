@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings{% endblock %}
+{% block breadcrumb %}Settings{% endblock %}
+
+{% block content %}
+<div style="max-width: 840px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title">Detection Engine Settings</h1>
+            <p class="page-subtitle">Configure mathematical thresholds, upload constraints, and review detection subsystem status.</p>
+        </div>
+    </div>
+
+    <!-- Main Settings Form Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Operational Parameters
+                </h2>
+                <p class="panel-subtitle">Values are persisted to the SQLite database and update runtime detection logic</p>
+            </div>
+        </div>
+
+        <form action="{{ url_for('settings.index') }}" method="POST" style="padding: 22px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Section 1: NLP Thresholds -->
+            <h3 style="font-size: 13.5px; font-weight: 700; color: var(--color-primary-navy); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.04em;">
+                1. Text Analysis &amp; Sentence Matching Thresholds
+            </h3>
+
+            <div class="form-group">
+                <label class="form-label" for="sent_thresh">
+                    Sentence Cosine Similarity Match Threshold
+                </label>
+                <input type="number" step="0.01" min="0.10" max="0.99" name="sentence_similarity_threshold" id="sent_thresh" class="form-control" value="{{ settings['SENTENCE_SIMILARITY_THRESHOLD'] }}" required>
+                <div class="form-hint">
+                    Default: <strong>0.70</strong> (Valid range: 0.10 &ndash; 0.99). Pairs of segmented sentences with cosine similarity &ge; this value are flagged as matching passages in the similarity report.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="min_len">
+                    Minimum Sentence Character Length
+                </label>
+                <input type="number" step="1" min="5" max="200" name="min_sentence_length" id="min_len" class="form-control" value="{{ settings['MIN_SENTENCE_LENGTH'] }}" required>
+                <div class="form-hint">
+                    Default: <strong>20</strong> characters. Sentences shorter than this threshold are excluded from pairwise comparison to prevent false positives on short transitional phrases.
+                </div>
+            </div>
+
+            <!-- Section 2: Upload Limits -->
+            <h3 style="font-size: 13.5px; font-weight: 700; color: var(--color-primary-navy); margin: 24px 0 14px; text-transform: uppercase; letter-spacing: 0.04em;">
+                2. Document Upload Constraints
+            </h3>
+
+            <div class="form-group">
+                <label class="form-label" for="max_mb">
+                    Maximum Document Size (Megabytes)
+                </label>
+                <input type="number" step="1" min="1" max="100" name="max_content_length_mb" id="max_mb" class="form-control" value="{{ settings['MAX_CONTENT_LENGTH_MB'] }}" required>
+                <div class="form-hint">
+                    Default: <strong>10</strong> MB (Valid range: 1 &ndash; 100 MB). Maximum payload size accepted for PDF, Word (.docx), and plain text (.txt) files.
+                </div>
+            </div>
+
+            <!-- Section 3: Classification Bands -->
+            <h3 style="font-size: 13.5px; font-weight: 700; color: var(--color-primary-navy); margin: 24px 0 14px; text-transform: uppercase; letter-spacing: 0.04em;">
+                3. Similarity Classification Thresholds (%)
+            </h3>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;">
+                <div class="form-group">
+                    <label class="form-label" for="thresh_low">Low Ceiling (%)</label>
+                    <input type="number" step="0.5" min="1" max="40" name="similarity_threshold_low" id="thresh_low" class="form-control" value="{{ settings['SIMILARITY_THRESHOLD_LOW'] }}" required>
+                    <div class="form-hint">0% to Low%</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="thresh_mod">Moderate Ceiling (%)</label>
+                    <input type="number" step="0.5" min="10" max="60" name="similarity_threshold_moderate" id="thresh_mod" class="form-control" value="{{ settings['SIMILARITY_THRESHOLD_MODERATE'] }}" required>
+                    <div class="form-hint">Low% to Mod%</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="thresh_high">Elevated Ceiling (%)</label>
+                    <input type="number" step="0.5" min="30" max="95" name="similarity_threshold_high" id="thresh_high" class="form-control" value="{{ settings['SIMILARITY_THRESHOLD_HIGH'] }}" required>
+                    <div class="form-hint">>Mod% to High%</div>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid var(--color-border); padding-top: 16px;">
+                <button type="submit" class="btn btn-primary">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Engine Subsystems Status (Read-Only Diagnostics) -->
+    <div class="panel">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    Engine Diagnostics &amp; Modular Subsystems
+                </h2>
+                <p class="panel-subtitle">Runtime availability of OCR and semantic embedding extensions</p>
+            </div>
+        </div>
+
+        <div class="panel-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <!-- Optical Character Recognition -->
+                <div style="background-color: var(--color-bg-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <strong style="font-size: 13px; color: var(--color-primary-navy);">Optical Character Recognition (OCR)</strong>
+                        {% if ocr_status.available %}
+                            <span class="status-badge badge-completed">Active</span>
+                        {% else %}
+                            <span class="status-badge badge-pending">Fallback Mode</span>
+                        {% endif %}
+                    </div>
+                    <p style="font-size: 12px; color: var(--color-text-muted); line-height: 1.4; margin-bottom: 8px;">
+                        {{ ocr_status.message }}
+                    </p>
+                    <div style="font-size: 11px; color: var(--color-text-secondary); background: white; padding: 6px 8px; border-radius: 3px; border: 1px solid #e2e8f0;">
+                        <div><strong>PyTesseract:</strong> {{ "Installed" if ocr_status.pytesseract_installed else "Not Installed" }}</div>
+                        <div><strong>Tesseract Binary:</strong> {{ ocr_status.binary_path if ocr_status.binary_path else "Not Detected" }}</div>
+                    </div>
+                </div>
+
+                <!-- Semantic Embeddings Subsystem -->
+                <div style="background-color: var(--color-bg-subtle); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 14px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <strong style="font-size: 13px; color: var(--color-primary-navy);">Semantic Embeddings Extension</strong>
+                        {% if semantic_status.available %}
+                            <span class="status-badge badge-completed">Available</span>
+                        {% else %}
+                            <span class="status-badge badge-pending">Standard TF-IDF Active</span>
+                        {% endif %}
+                    </div>
+                    <p style="font-size: 12px; color: var(--color-text-muted); line-height: 1.4; margin-bottom: 8px;">
+                        {{ semantic_status.message }}
+                    </p>
+                    <div style="font-size: 11px; color: var(--color-text-secondary); background: white; padding: 6px 8px; border-radius: 3px; border: 1px solid #e2e8f0;">
+                        <div><strong>sentence-transformers:</strong> {{ "Installed" if semantic_status.installed else "Not Installed" }}</div>
+                        <div><strong>Core Pipeline:</strong> TF-IDF + Cosine (Fully Operational)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-footer" style="justify-content: space-between;">
+            <span style="font-size: 12px; color: var(--color-text-muted);">Reset parameters to factory academic standards:</span>
+            <form action="{{ url_for('settings.reset_defaults') }}" method="POST" data-confirm="Are you sure you want to reset all engine parameters to defaults?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secondary btn-sm">
+                    Reset All Defaults
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

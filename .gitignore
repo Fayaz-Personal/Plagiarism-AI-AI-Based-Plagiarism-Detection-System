@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Database
+instance/*.db
+*.sqlite3
+
+# Uploads & Reports generated
+uploads/*
+!uploads/.gitkeep
+reports/*
+!reports/.gitkeep
+
+# Environment variables
+.env
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Check a Document{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Portal</a> <span class="breadcrumb-sep">/</span> Select Document to Check{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title">Select Document for Similarity Check</h1>
+            <p class="page-subtitle">Choose an uploaded document to compare against the reference document collection.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('analysis.upload') }}" class="btn btn-primary btn-sm">
+                + Upload New Document
+            </a>
+        </div>
+    </div>
+
+    <!-- Reference Library Status Notice -->
+    {% if reference_count > 0 %}
+    <div class="academic-notice" style="border-left-color: var(--color-success); background-color: #f0fdf4; border-color: #bbf7d0;">
+        <strong style="color: var(--color-success-text); font-size: 13px;">Reference Collection Ready:</strong>
+        <span style="color: #166534; font-size: 12.5px;">
+            <strong>{{ reference_count }}</strong> reference document{{ 's' if reference_count != 1 else '' }} available in the comparison pool.
+        </span>
+    </div>
+    {% else %}
+    <div class="academic-notice" style="border-left-color: var(--color-warning); background-color: var(--color-warning-bg); border-color: var(--color-warning-border);">
+        <strong style="color: var(--color-warning-text); font-size: 13px;">Notice: No Reference Documents Available</strong>
+        <p style="font-size: 12.5px; color: #92400e; margin-top: 3px;">
+            Plagiarism analysis requires reference documents in the library to evaluate textual overlap.
+        </p>
+        <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <a href="{{ url_for('analysis.upload', type='reference') }}" class="btn btn-primary btn-sm">Upload Reference Document</a>
+            <form action="{{ url_for('dashboard.generate_demo_data') }}" method="POST" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secondary btn-sm">Load Sample References</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Document Selection Table Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                    </svg>
+                    Submitted Documents Ready for Verification
+                </h2>
+                <p class="panel-subtitle">Select a document to execute TF-IDF feature extraction and cosine similarity matching</p>
+            </div>
+            <a href="{{ url_for('analysis.upload') }}" class="btn btn-secondary btn-sm">+ Upload Another</a>
+        </div>
+
+        {% if submitted_docs %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Document Filename</th>
+                        <th>Format</th>
+                        <th>Extracted Words</th>
+                        <th>Upload Date</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in submitted_docs %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('documents.details', document_id=doc.id) }}" class="table-doc-title">
+                                {{ doc.original_filename }}
+                            </a>
+                            <span class="table-meta-sub">{{ doc.formatted_size }} &bull; {{ doc.sentence_count }} segmented sentences</span>
+                        </td>
+                        <td>
+                            <span class="format-tag">{{ doc.file_type.upper() }}</span>
+                        </td>
+                        <td>
+                            {{ doc.word_count }} words
+                        </td>
+                        <td style="color: var(--color-text-muted);">
+                            {{ doc.upload_date.strftime('%b %d, %Y') }}
+                        </td>
+                        <td style="text-align: right;">
+                            <form action="{{ url_for('analysis.run_analysis', document_id=doc.id) }}" method="POST" style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-primary btn-sm" {% if reference_count == 0 %}disabled title="Add reference documents first"{% endif %}>
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                    Run Document Check
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state-panel">
+            <div class="empty-icon-wrap">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+            </div>
+            <h3 class="empty-title">No Submitted Documents Available</h3>
+            <p class="empty-desc">Upload a document to compare its text against available reference documents.</p>
+            <a href="{{ url_for('analysis.upload') }}" class="btn btn-primary btn-sm">Upload Document</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

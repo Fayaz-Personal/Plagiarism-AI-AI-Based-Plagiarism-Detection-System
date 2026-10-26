@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found (404){% endblock %}
+{% block breadcrumb %}404 Not Found{% endblock %}
+
+{% block content %}
+<div style="max-width: 540px; margin: 40px auto; text-align: center;">
+    <div class="panel" style="padding: 40px 24px;">
+        <div style="font-size: 54px; font-weight: 800; color: var(--color-primary-navy); line-height: 1; letter-spacing: -0.02em;">404</div>
+        <h2 style="font-size: 18px; font-weight: 700; margin: 14px 0 8px; color: var(--color-primary-navy);">Document or Resource Not Found</h2>
+        <p style="font-size: 13.5px; color: var(--color-text-muted); margin-bottom: 22px; line-height: 1.5;">
+            The requested document record, similarity report, or navigation path does not exist in the verification system.
+        </p>
+        <div>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">
+                Return to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

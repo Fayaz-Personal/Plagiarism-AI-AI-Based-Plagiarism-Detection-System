@@ -1,0 +1,3 @@
+# Ignore files in uploads and reports but keep folder
+*
+!.gitkeep

@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Document Verification Dashboard{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header-row">
+    <div>
+        <h1 class="page-title">Document Verification Dashboard</h1>
+        <p class="page-subtitle">Manage document submissions, compare reference materials, and review similarity reports.</p>
+    </div>
+</div>
+
+<!-- Compact Top Action Area -->
+<div class="action-banner">
+    <div class="action-banner-text">
+        <h3>Verification Workflows</h3>
+        <p>Submit documents for academic similarity check or update reference materials.</p>
+    </div>
+    <div class="action-buttons-group">
+        <a href="{{ url_for('analysis.upload') }}" class="btn btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+            Check a Document
+        </a>
+        <a href="{{ url_for('analysis.upload', type='reference') }}" class="btn btn-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+            Add Reference Document
+        </a>
+        <a href="{{ url_for('reports.index') }}" class="btn btn-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M10 12l2 2 4-4"></path>
+            </svg>
+            View Reports
+        </a>
+    </div>
+</div>
+
+<!-- 4 Compact Statistics (Real Database Values) -->
+<div class="stat-grid-4">
+    <!-- 1. Documents Submitted -->
+    <div class="stat-item">
+        <div class="stat-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+        </div>
+        <div class="stat-details">
+            <span class="stat-title">Documents Submitted</span>
+            <span class="stat-number">{{ total_submitted_docs }}</span>
+            <span style="font-size: 11px; color: var(--color-text-muted);">Total Documents: {{ total_documents }}</span>
+        </div>
+    </div>
+
+    <!-- 2. Documents Checked -->
+    <div class="stat-item">
+        <div class="stat-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+        </div>
+        <div class="stat-details">
+            <span class="stat-title">Documents Checked</span>
+            <span class="stat-number">{{ documents_analyzed }}</span>
+        </div>
+    </div>
+
+    <!-- 3. Reference Documents -->
+    <div class="stat-item">
+        <div class="stat-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+        </div>
+        <div class="stat-details">
+            <span class="stat-title">Reference Documents</span>
+            <span class="stat-number">{{ total_reference_docs }}</span>
+        </div>
+    </div>
+
+    <!-- 4. Reports Generated -->
+    <div class="stat-item">
+        <div class="stat-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <path d="M10 12l2 2 4-4"></path>
+            </svg>
+        </div>
+        <div class="stat-details">
+            <span class="stat-title">Reports Generated</span>
+            <span class="stat-number">{{ reports_count }}</span>
+        </div>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start;">
+    <!-- Left Column: Recent Document Checks & Recent Activity -->
+    <div>
+        <!-- Recent Document Checks Table Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        Recent Document Checks
+                    </h2>
+                    <p class="panel-subtitle">Submitted papers and their verification similarity scores</p>
+                </div>
+                <a href="{{ url_for('analysis.history') }}" class="btn btn-secondary btn-sm">Full History</a>
+            </div>
+
+            {% if recent_analyses %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Document Name</th>
+                            <th>Submission Date</th>
+                            <th>File Type</th>
+                            <th>Highest Similarity</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in recent_analyses %}
+                        <tr>
+                            <td>
+                                <span class="table-doc-title">{{ a.document.original_filename if a.document else "Document #" ~ a.document_id }}</span>
+                                <span class="table-meta-sub">{{ a.references_compared }} reference sources compared</span>
+                            </td>
+                            <td>
+                                {{ a.analysis_date.strftime('%b %d, %Y') }}
+                            </td>
+                            <td>
+                                <span class="format-tag">{{ a.document.file_type if a.document else "TXT" }}</span>
+                            </td>
+                            <td>
+                                <span class="status-badge {% if a.highest_similarity_score < 10 %}badge-sim-low{% elif a.highest_similarity_score < 30 %}badge-sim-mod{% elif a.highest_similarity_score < 60 %}badge-sim-elevated{% else %}badge-sim-high{% endif %}">
+                                    {{ a.highest_similarity_score }}%
+                                </span>
+                            </td>
+                            <td>
+                                {% if a.analysis_status == 'completed' %}
+                                    <span class="status-badge badge-completed">Completed</span>
+                                {% elif a.analysis_status == 'no_references' %}
+                                    <span class="status-badge badge-pending">No References</span>
+                                {% else %}
+                                    <span class="status-badge badge-failed">Failed</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="{{ url_for('analysis.results', analysis_id=a.id) }}" class="btn btn-secondary btn-sm">
+                                    View Report
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state-panel">
+                <div class="empty-icon-wrap">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <h3 class="empty-title">No Document Checks Yet</h3>
+                <p class="empty-desc">Upload a document to check its similarity against the reference document collection.</p>
+                <a href="{{ url_for('analysis.upload') }}" class="btn btn-primary btn-sm">Check a Document</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Recent Activity (Real Events from Database) -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                        </svg>
+                        Recent Activity Log
+                    </h2>
+                    <p class="panel-subtitle">Audited events recorded in the database</p>
+                </div>
+            </div>
+
+            {% if recent_activity %}
+            <div style="padding: 12px 20px;">
+                <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                    {% for item in recent_activity %}
+                    <li style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--color-border-subtle);">
+                        <div style="display: flex; align-items: flex-start; gap: 12px;">
+                            <div style="width: 28px; height: 28px; border-radius: 4px; background-color: var(--color-bg-subtle); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--color-primary-navy);">
+                                {% if item.type == 'analysis' %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                                {% else %}
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span style="font-size: 13px; font-weight: 600; color: var(--color-primary-navy); display: block;">{{ item.title }}</span>
+                                <span style="font-size: 12px; color: var(--color-text-muted);">{{ item.desc }} &bull; {{ item.timestamp.strftime('%b %d, %H:%M UTC') }}</span>
+                            </div>
+                        </div>
+                        <a href="{{ item.url }}" class="btn btn-secondary btn-sm" style="flex-shrink: 0;">{{ item.action }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% else %}
+            <div class="empty-state-panel">
+                <p class="empty-desc">No system events logged in database yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Reference Collection Status & Academic Guidelines -->
+    <div>
+        <!-- Reference Collection Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                        Reference Collection
+                    </h2>
+                    <p class="panel-subtitle">Available comparison materials</p>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div style="text-align: center; padding: 10px 0 16px;">
+                    <span style="font-size: 2.2rem; font-weight: 700; color: var(--color-primary-navy); display: block;">{{ total_reference_docs }}</span>
+                    <span style="font-size: 12.5px; color: var(--color-text-muted);">Active reference documents in library</span>
+                </div>
+
+                <p style="font-size: 12.5px; color: var(--color-text-secondary); line-height: 1.5; margin-bottom: 16px; background-color: var(--color-bg-subtle); padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--color-border);">
+                    Submitted documents are compared strictly against documents in this reference pool using TF-IDF term representation and Cosine similarity.
+                </p>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <a href="{{ url_for('documents.reference_library') }}" class="btn btn-primary" style="width: 100%;">
+                        Manage Reference Collection
+                    </a>
+                    <a href="{{ url_for('analysis.upload', type='reference') }}" class="btn btn-secondary" style="width: 100%;">
+                        + Add Reference Document
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Guidelines & Verification Notice -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    Reviewer Guidelines
+                </h2>
+            </div>
+            <div class="panel-body" style="font-size: 12.5px; line-height: 1.5; color: var(--color-text-secondary);">
+                <p style="margin-bottom: 10px;">
+                    <strong>Interpreting Similarity Scores:</strong>
+                </p>
+                <ul style="padding-left: 18px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px;">
+                    <li><strong>&lt; 10% (Low):</strong> Standard academic vocabulary and common subject phrasing.</li>
+                    <li><strong>10% &ndash; 30% (Moderate):</strong> Common terminology, standard definitions, or cited source passages.</li>
+                    <li><strong>30% &ndash; 60% (Elevated):</strong> Significant overlapping sentence structures; manual instructor inspection required.</li>
+                    <li><strong>&ge; 60% (High):</strong> Extensive identical passages; evaluate quotation marks and attribution.</li>
+                </ul>
+                <div style="border-top: 1px solid var(--color-border); padding-top: 10px;">
+                    <a href="{{ url_for('methodology.index') }}" style="font-weight: 500; font-size: 12px;">
+                        Read Complete Mathematical Methodology &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

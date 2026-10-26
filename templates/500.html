@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{{ error_title or "System Error (500)" }}{% endblock %}
+{% block breadcrumb %}System Error{% endblock %}
+
+{% block content %}
+<div style="max-width: 540px; margin: 40px auto; text-align: center;">
+    <div class="panel" style="padding: 40px 24px;">
+        <div style="font-size: 54px; font-weight: 800; color: var(--color-danger); line-height: 1; letter-spacing: -0.02em;">500</div>
+        <h2 style="font-size: 18px; font-weight: 700; margin: 14px 0 8px; color: var(--color-primary-navy);">
+            {{ error_title or "System Processing Exception" }}
+        </h2>
+        <p style="font-size: 13.5px; color: var(--color-text-muted); margin-bottom: 22px; line-height: 1.5;">
+            {{ error_message or "An error occurred during document extraction or similarity processing. Please verify file integrity and try again." }}
+        </p>
+        <div>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">
+                Return to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

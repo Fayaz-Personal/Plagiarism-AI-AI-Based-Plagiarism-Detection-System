@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Plagiarism Reports{% endblock %}
+{% block breadcrumb %}Reports{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header-row">
+    <div>
+        <h1 class="page-title">Plagiarism Reports</h1>
+        <p class="page-subtitle">Formal verification reports generated from completed document similarity analyses.</p>
+    </div>
+    <div>
+        <a href="{{ url_for('analysis.upload') }}" class="btn btn-primary btn-sm">
+            + Run Document Check
+        </a>
+    </div>
+</div>
+
+<!-- Main Reports Table Panel -->
+<div class="panel">
+    <div class="panel-header">
+        <div>
+            <h2 class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <path d="M10 12l2 2 4-4"></path>
+                </svg>
+                Available Academic Reports ({{ analyses | length }})
+            </h2>
+            <p class="panel-subtitle">Exportable PDF and Word documents generated on-the-fly from analysis metrics</p>
+        </div>
+    </div>
+
+    {% if analyses %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Report Ref</th>
+                    <th>Document Name</th>
+                    <th>Analysis Date</th>
+                    <th>Similarity Index</th>
+                    <th>Text Coverage</th>
+                    <th>Report Status</th>
+                    <th style="text-align: right;">Download Formats &amp; Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in analyses %}
+                <tr>
+                    <td>
+                        <strong style="color: var(--color-primary-navy);">Report #{{ a.id }}</strong>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('analysis.results', analysis_id=a.id) }}" class="table-doc-title">
+                            {{ a.document.original_filename if a.document else "Document" }}
+                        </a>
+                        <span class="table-meta-sub">{{ a.references_compared }} references compared</span>
+                    </td>
+                    <td style="color: var(--color-text-muted);">
+                        {{ a.analysis_date.strftime('%B %d, %Y') }}
+                    </td>
+                    <td>
+                        <span class="status-badge {% if a.highest_similarity_score < 10 %}badge-sim-low{% elif a.highest_similarity_score < 30 %}badge-sim-mod{% elif a.highest_similarity_score < 60 %}badge-sim-elevated{% else %}badge-sim-high{% endif %}">
+                            {{ a.highest_similarity_score }}% ({{ a.similarity_category }})
+                        </span>
+                    </td>
+                    <td>
+                        <strong>{{ a.estimated_matching_text_coverage }}%</strong>
+                    </td>
+                    <td>
+                        <span class="status-badge badge-completed">Ready</span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 6px;">
+                            <a href="{{ url_for('reports.download_pdf', analysis_id=a.id) }}" class="btn btn-primary btn-sm">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                PDF
+                            </a>
+                            <a href="{{ url_for('reports.download_docx', analysis_id=a.id) }}" class="btn btn-secondary btn-sm">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                Word (.docx)
+                            </a>
+                            <a href="{{ url_for('analysis.results', analysis_id=a.id) }}" class="btn btn-secondary btn-sm">
+                                View Results
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state-panel">
+        <div class="empty-icon-wrap">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+        </div>
+        <h3 class="empty-title">No Reports Available</h3>
+        <p class="empty-desc">
+            Completed document analyses generate formal PDF and Word reports. Check a document to generate your first verification report.
+        </p>
+        <a href="{{ url_for('analysis.upload') }}" class="btn btn-primary btn-sm">Run Document Check</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

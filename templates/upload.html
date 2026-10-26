@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Check a Document{% endblock %}
+{% block breadcrumb %}Check a Document{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title">Check a Document</h1>
+            <p class="page-subtitle">Upload a document to compare its content against available reference documents.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('documents.index') }}" class="btn btn-secondary btn-sm">
+                Document Library
+            </a>
+        </div>
+    </div>
+
+    <!-- Reference Documents Availability Check -->
+    {% if reference_count > 0 %}
+    <div class="academic-notice" style="border-left-color: var(--color-success); background-color: #f0fdf4; border-color: #bbf7d0;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <strong style="color: var(--color-success-text); font-size: 13px;">Reference Collection Ready:</strong>
+                <span style="color: #166534; font-size: 12.5px;">
+                    <strong>{{ reference_count }}</strong> reference document{{ 's' if reference_count != 1 else '' }} available in the system comparison pool.
+                </span>
+            </div>
+            <a href="{{ url_for('documents.reference_library') }}" class="btn btn-secondary btn-sm" style="background: white;">View Reference Collection</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="academic-notice" style="border-left-color: var(--color-warning); background-color: var(--color-warning-bg); border-color: var(--color-warning-border);">
+        <strong style="color: var(--color-warning-text); font-size: 13px;">Notice: No Reference Documents Available</strong>
+        <p style="font-size: 12.5px; color: #92400e; margin-top: 3px;">
+            Document comparison requires at least one reference document in the library. Please upload reference documents to enable textual similarity analysis.
+        </p>
+        <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <a href="{{ url_for('analysis.upload', type='reference') }}" class="btn btn-primary btn-sm">Upload Reference Document</a>
+            <form action="{{ url_for('dashboard.generate_demo_data') }}" method="POST" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secondary btn-sm">Load Sample Reference Papers</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Upload Panel Form -->
+    <div class="upload-panel">
+        <form id="documentUploadForm" action="{{ url_for('analysis.upload') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Document Role Selector -->
+            <div class="form-group">
+                <label class="form-label">Document Role <span style="color: var(--color-danger);">*</span></label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <label style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; background: var(--color-bg-surface);" id="roleSubmittedLabel">
+                        <input type="radio" name="document_type" value="submitted" {% if request.args.get('type') != 'reference' %}checked{% endif %} style="margin-top: 3px;" id="radioRoleSubmitted">
+                        <div>
+                            <strong style="display: block; font-size: 13px; color: var(--color-primary-navy);">Document to Check</strong>
+                            <p style="font-size: 11.5px; color: var(--color-text-muted); margin-top: 2px;">
+                                A submitted paper or student work to be checked against the reference library.
+                            </p>
+                        </div>
+                    </label>
+
+                    <label style="border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; background: var(--color-bg-surface);" id="roleReferenceLabel">
+                        <input type="radio" name="document_type" value="reference" {% if request.args.get('type') == 'reference' %}checked{% endif %} style="margin-top: 3px;" id="radioRoleReference">
+                        <div>
+                            <strong style="display: block; font-size: 13px; color: var(--color-primary-navy);">Reference Source Document</strong>
+                            <p style="font-size: 11.5px; color: var(--color-text-muted); margin-top: 2px;">
+                                An authoritative journal article or text to add to the comparison collection.
+                            </p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Conventional Upload Area -->
+            <div class="form-group">
+                <label class="form-label">Document File <span style="color: var(--color-danger);">*</span></label>
+                
+                <div class="dropzone-box" id="dropzoneBox">
+                    <svg class="dropzone-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="12" y1="18" x2="12" y2="12"></line>
+                        <line x1="9" y1="15" x2="15" y2="15"></line>
+                    </svg>
+                    <div class="dropzone-title">Select Document File or Drag &amp; Drop</div>
+                    <div class="dropzone-desc">
+                        Supported formats: <strong>PDF (.pdf)</strong>, <strong>Word (.docx)</strong>, <strong>Text (.txt)</strong> &bull; Maximum file size: 10 MB
+                    </div>
+                    <div style="margin-top: 14px;">
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnBrowseFile">
+                            Select File from Computer
+                        </button>
+                    </div>
+                    <input type="file" id="documentFileInput" name="document_file" accept=".pdf,.docx,.txt" style="display: none;" required>
+                </div>
+
+                <!-- Client-side Selected File Display with Remove Action -->
+                <div class="file-selected-box" id="fileSelectedDisplay" style="display: none;">
+                    <div class="file-selected-info">
+                        <span class="format-tag" id="selectedFileExt">PDF</span>
+                        <div>
+                            <span class="file-selected-name" id="selectedFileName">document.pdf</span>
+                            <span class="file-selected-size" id="selectedFileSize">0 KB</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-remove-file" id="btnRemoveFile">
+                        Remove File
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reference Comparison Scope Preview -->
+            <div class="comparison-scope-box" id="comparisonScopeBox">
+                <div class="scope-header">
+                    <span class="scope-title">Reference Comparison Collection</span>
+                    <span class="scope-count">{{ reference_count }} Available Sources</span>
+                </div>
+                {% if reference_docs %}
+                <ul class="scope-doc-list">
+                    {% for ref in reference_docs[:5] %}
+                    <li>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        <span>{{ ref.original_filename }} ({{ ref.file_type.upper() }}, {{ ref.word_count }} words)</span>
+                    </li>
+                    {% endfor %}
+                    {% if reference_docs | length > 5 %}
+                    <li style="color: var(--color-text-muted); font-style: italic; padding-left: 20px;">
+                        ...and {{ (reference_docs | length) - 5 }} additional reference document{{ 's' if ((reference_docs | length) - 5) != 1 else '' }} in library
+                    </li>
+                    {% endif %}
+                </ul>
+                {% else %}
+                <p style="font-size: 12px; color: var(--color-text-muted);">
+                    No reference documents currently uploaded. Comparisons require at least one reference document.
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Analyze Immediately Checkbox -->
+            <div class="form-group" id="immediateAnalyzeWrap" style="margin-top: 18px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer;">
+                    <input type="checkbox" name="analyze_now" value="1" checked style="width: 15px; height: 15px;">
+                    <span>Run document verification check immediately upon text extraction</span>
+                </label>
+            </div>
+
+            <!-- Action Controls -->
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; border-top: 1px solid var(--color-border); padding-top: 16px;">
+                <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary btn-lg" id="btnSubmitCheck">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span id="submitBtnText">Run Document Check</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Realistic Document Processing Experience Overlay (Section 6) -->
+<div class="processing-overlay" id="processingOverlay">
+    <div class="processing-modal">
+        <div class="processing-header">
+            <div class="processing-spinner"></div>
+            <h3 class="processing-title">Processing Document</h3>
+            <p class="processing-desc" id="processingStatusDesc">Ingesting file and extracting textual content...</p>
+        </div>
+
+        <ul class="processing-steps-list">
+            <li class="step-row step-active" id="step1">
+                <div class="step-icon-indicator">&bull;</div>
+                <span>1. Document uploaded to secure workspace</span>
+            </li>
+            <li class="step-row step-pending" id="step2">
+                <div class="step-icon-indicator">2</div>
+                <span>2. Text extracted and normalized</span>
+            </li>
+            <li class="step-row step-pending" id="step3">
+                <div class="step-icon-indicator">3</div>
+                <span>3. Reference documents compared</span>
+            </li>
+            <li class="step-row step-pending" id="step4">
+                <div class="step-icon-indicator">4</div>
+                <span>4. Matching passages analyzed</span>
+            </li>
+            <li class="step-row step-pending" id="step5">
+                <div class="step-icon-indicator">5</div>
+                <span>5. Verification report prepared</span>
+            </li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Similarity Report &mdash; {{ analysis.document.original_filename if analysis.document else "Document" }}{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('analysis.history') }}">Analysis History</a> <span class="breadcrumb-sep">/</span> Report #{{ analysis.id }}{% endblock %}
+
+{% block content %}
+<!-- Top Header Banner -->
+<div class="report-header-banner">
+    <div class="report-meta-group">
+        <h1 class="report-doc-title">
+            {{ analysis.document.original_filename if analysis.document else "Document #" ~ analysis.document_id }}
+            <span class="status-badge {% if analysis.highest_similarity_score < 10 %}badge-sim-low{% elif analysis.highest_similarity_score < 30 %}badge-sim-mod{% elif analysis.highest_similarity_score < 60 %}badge-sim-elevated{% else %}badge-sim-high{% endif %}" style="font-size: 13px; padding: 3px 10px;">
+                {{ analysis.highest_similarity_score }}% Similarity
+            </span>
+        </h1>
+        <div class="report-meta-row">
+            <span><strong>Analysis ID:</strong> #{{ analysis.id }}</span>
+            <span>&bull;</span>
+            <span><strong>Format:</strong> {{ analysis.document.file_type.upper() if analysis.document else "TXT" }}</span>
+            <span>&bull;</span>
+            <span><strong>Date Checked:</strong> {{ analysis.analysis_date.strftime('%B %d, %Y at %H:%M UTC') }}</span>
+            <span>&bull;</span>
+            <span><strong>Status:</strong> <span style="text-transform: uppercase; font-weight: 600; color: var(--color-success);">{{ analysis.analysis_status }}</span></span>
+        </div>
+    </div>
+
+    <!-- Download Formal Reports -->
+    <div class="report-actions">
+        <a href="{{ url_for('reports.download_pdf', analysis_id=analysis.id) }}" class="btn btn-primary btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download PDF Report
+        </a>
+        <a href="{{ url_for('reports.download_docx', analysis_id=analysis.id) }}" class="btn btn-secondary btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            Word (.docx)
+        </a>
+    </div>
+</div>
+
+<!-- Academic Disclaimer Notice (Required Exact Phrasing) -->
+<div class="academic-notice">
+    <strong>Academic Evaluation Notice:</strong> Similarity scores indicate textual resemblance between documents. They do not independently establish plagiarism. Review the matched passages and their context before drawing conclusions.
+</div>
+
+<!-- Compact Summary Metrics (No oversized circular gauges) -->
+<div class="report-summary-grid">
+    <div class="summary-block">
+        <div class="summary-block-label">Highest Similarity</div>
+        <div class="summary-block-value" style="color: {% if analysis.highest_similarity_score >= 60 %}#dc2626{% elif analysis.highest_similarity_score >= 30 %}#d97706{% else %}#059669{% endif %};">
+            {{ analysis.highest_similarity_score }}%
+        </div>
+        <div class="summary-block-hint">{{ analysis.similarity_category }} resemblance band</div>
+    </div>
+
+    <div class="summary-block">
+        <div class="summary-block-label">Average Similarity</div>
+        <div class="summary-block-value">{{ analysis.average_similarity_score }}%</div>
+        <div class="summary-block-hint">Mean score across reference pool</div>
+    </div>
+
+    <div class="summary-block">
+        <div class="summary-block-label">References Compared</div>
+        <div class="summary-block-value">{{ analysis.references_compared }}</div>
+        <div class="summary-block-hint">Available library documents</div>
+    </div>
+
+    <div class="summary-block">
+        <div class="summary-block-label">Matching Passages</div>
+        <div class="summary-block-value">{{ analysis.matching_sentence_count }}</div>
+        <div class="summary-block-hint">{{ analysis.estimated_matching_text_coverage }}% text coverage</div>
+    </div>
+</div>
+
+<!-- Reference Comparison Table Panel -->
+<div class="panel">
+    <div class="panel-header">
+        <div>
+            <h2 class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                Reference Document Comparison Table
+            </h2>
+            <p class="panel-subtitle">Pairwise cosine similarity breakdown per reference source</p>
+        </div>
+    </div>
+
+    {% if pairwise_results %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Reference Document</th>
+                    <th>Document Similarity</th>
+                    <th>Matching Passages</th>
+                    <th style="text-align: right;">View Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in pairwise_results %}
+                <tr>
+                    <td>
+                        <strong style="color: var(--color-primary-navy);">{{ r.reference_document_name }}</strong>
+                    </td>
+                    <td>
+                        <span class="status-badge {% if r.document_similarity_score < 10 %}badge-sim-low{% elif r.document_similarity_score < 30 %}badge-sim-mod{% elif r.document_similarity_score < 60 %}badge-sim-elevated{% else %}badge-sim-high{% endif %}">
+                            {{ r.document_similarity_score }}%
+                        </span>
+                    </td>
+                    <td>
+                        <strong>{{ r.matching_sentence_count }}</strong> flagged passage{{ 's' if r.matching_sentence_count != 1 else '' }}
+                    </td>
+                    <td style="text-align: right;">
+                        <button type="button" class="btn btn-secondary btn-sm jump-ref-btn" data-ref="{{ r.reference_document_name }}">
+                            Filter Matches
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="panel-body">
+        <p style="color: var(--color-text-muted); font-size: 13px;">No reference comparison records available for this analysis.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Matched Content Section (Side-by-Side Comparison) -->
+<div class="panel" id="matchedPassagesPanel">
+    <div class="panel-header" style="flex-direction: column; align-items: stretch; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h2 class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                    </svg>
+                    Flagged Text Passages (<span id="visibleMatchCount">{{ enriched_matches | length }}</span> of {{ enriched_matches | length }})
+                </h2>
+                <p class="panel-subtitle">Side-by-side passage comparison between submitted text and reference source</p>
+            </div>
+
+            <!-- Match Level Filter Pills -->
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary btn-sm match-filter-btn active" data-filter="all">All Matches</button>
+                <button type="button" class="btn btn-secondary btn-sm match-filter-btn" data-filter="high">High Similarity (&ge;80%)</button>
+                <button type="button" class="btn btn-secondary btn-sm match-filter-btn" data-filter="moderate">Medium Similarity (&lt;80%)</button>
+            </div>
+        </div>
+
+        <!-- Filter Controls Bar -->
+        <div class="filter-bar" style="margin-bottom: 0;">
+            <div style="flex: 2; min-width: 200px;">
+                <input type="text" id="matchSearchInput" class="form-control" style="padding: 6px 10px; font-size: 12.5px;" placeholder="Search within matched text passages...">
+            </div>
+            <div style="flex: 1; min-width: 180px;">
+                <select id="matchRefSelect" class="form-control" style="padding: 6px 10px; font-size: 12.5px;">
+                    <option value="all">All Reference Sources</option>
+                    {% for ref in unique_references %}
+                    <option value="{{ ref }}">{{ ref }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="button" id="resetMatchFiltersBtn" class="btn btn-secondary btn-sm">Reset Filters</button>
+        </div>
+    </div>
+
+    <div class="panel-body" style="padding: 16px;">
+        {% if enriched_matches %}
+            {% for item in enriched_matches %}
+            <div class="comparison-card match-card" data-score="{{ item.score | round }}" data-category="{{ item.category | lower }}" data-ref="{{ item.reference_name }}">
+                <div class="comparison-card-header">
+                    <div class="match-source-title">
+                        <span>Passage Match #{{ loop.index }}</span>
+                        <span class="status-badge {% if item.score >= 80 %}badge-sim-high{% else %}badge-sim-mod{% endif %}">
+                            {{ item.category }}
+                        </span>
+                        <span style="font-size: 12px; color: var(--color-text-muted); font-weight: normal;">
+                            Reference: <strong>{{ item.reference_name }}</strong>
+                        </span>
+                    </div>
+                    <div>
+                        <span class="status-badge badge-completed">
+                            Similarity: {{ item.score | round(1) }}%
+                        </span>
+                    </div>
+                </div>
+
+                <div class="comparison-card-body">
+                    <!-- Left Side: Submitted Document Passage -->
+                    <div class="passage-column">
+                        <div class="passage-column-title">
+                            <span>Submitted Document Passage</span>
+                            {% if item.match.submitted_sentence_index is not none %}
+                            <span style="font-family: var(--font-family-mono); font-size: 10.5px;">Position #{{ item.match.submitted_sentence_index + 1 }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="passage-text-box">
+                            {{ item.highlighted_sub | safe }}
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Matching Reference Passage -->
+                    <div class="passage-column">
+                        <div class="passage-column-title">
+                            <span>Reference Document Passage</span>
+                            <span style="font-size: 10.5px; color: var(--color-text-muted);">{{ item.reference_name }}</span>
+                        </div>
+                        <div class="passage-text-box">
+                            {{ item.highlighted_ref | safe }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="comparison-card-footer">
+                    <strong>Evaluation Note:</strong> {{ item.explanation }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="empty-state-panel">
+            <div class="empty-icon-wrap" style="background-color: var(--color-success-bg); color: var(--color-success);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+            <h3 class="empty-title">No Matching Passages Identified</h3>
+            <p class="empty-desc">
+                No matching passages met or exceeded the sentence similarity threshold in the available reference collection.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

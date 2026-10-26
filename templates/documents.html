@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Document Library{% endblock %}
+{% block breadcrumb %}Document Library{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header-row">
+    <div>
+        <h1 class="page-title">Document Library</h1>
+        <p class="page-subtitle">Repository of submitted documents for checking and reference comparison materials.</p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <a href="{{ url_for('analysis.upload') }}" class="btn btn-primary btn-sm">
+            + Check Document
+        </a>
+        <a href="{{ url_for('analysis.upload', type='reference') }}" class="btn btn-secondary btn-sm">
+            + Add Reference
+        </a>
+    </div>
+</div>
+
+<!-- Category Tabs -->
+<div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--color-border); padding-bottom: 8px;">
+    <a href="{{ url_for('documents.index', category='all') }}" class="btn {% if category == 'all' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+        All Documents ({{ pagination.total if pagination else (documents | length) }})
+    </a>
+    <a href="{{ url_for('documents.index', category='submitted') }}" class="btn {% if category == 'submitted' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+        Submitted Papers
+    </a>
+    <a href="{{ url_for('documents.reference_library') }}" class="btn btn-secondary btn-sm">
+        Reference Collection &rarr;
+    </a>
+</div>
+
+<!-- Main Table Panel -->
+<div class="panel">
+    <!-- Filter & Search Controls -->
+    <div style="padding: 14px 18px; border-bottom: 1px solid var(--color-border); background-color: #f8fafc;">
+        <form method="GET" action="{{ url_for('documents.index') }}" class="filter-bar" style="margin-bottom: 0; padding: 0; background: transparent; border: none;">
+            <input type="hidden" name="category" value="{{ category }}">
+            
+            <div style="flex: 2; min-width: 200px;">
+                <input type="text" name="search" class="form-control" placeholder="Search documents by filename..." value="{{ search_query }}">
+            </div>
+
+            <div style="flex: 1; min-width: 130px;">
+                <select name="type" class="form-control">
+                    <option value="all" {% if file_type == 'all' %}selected{% endif %}>All Formats</option>
+                    <option value="pdf" {% if file_type == 'pdf' %}selected{% endif %}>PDF (.pdf)</option>
+                    <option value="docx" {% if file_type == 'docx' %}selected{% endif %}>Word (.docx)</option>
+                    <option value="txt" {% if file_type == 'txt' %}selected{% endif %}>Text (.txt)</option>
+                </select>
+            </div>
+
+            <div style="flex: 1; min-width: 140px;">
+                <select name="sort" class="form-control">
+                    <option value="date_desc" {% if sort_by == 'date_desc' %}selected{% endif %}>Newest Uploaded</option>
+                    <option value="date_asc" {% if sort_by == 'date_asc' %}selected{% endif %}>Oldest First</option>
+                    <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>Name (A&ndash;Z)</option>
+                    <option value="size_desc" {% if sort_by == 'size_desc' %}selected{% endif %}>File Size</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-secondary btn-sm">Filter</button>
+            {% if search_query or file_type != 'all' or sort_by != 'date_desc' %}
+                <a href="{{ url_for('documents.index', category=category) }}" class="btn btn-secondary btn-sm">Reset</a>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if documents %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Document Name</th>
+                    <th>Category</th>
+                    <th>File Type</th>
+                    <th>File Size</th>
+                    <th>Text Extraction</th>
+                    <th>Upload Date</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in documents %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('documents.details', document_id=doc.id) }}" class="table-doc-title">
+                            {{ doc.original_filename }}
+                        </a>
+                        <span class="table-meta-sub">{{ doc.word_count }} words &bull; {{ doc.sentence_count }} sentences</span>
+                    </td>
+                    <td>
+                        {% if doc.document_type == 'reference' %}
+                            <span class="status-badge badge-pending">Reference</span>
+                        {% else %}
+                            <span class="status-badge badge-completed">Submitted</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="format-tag">{{ doc.file_type.upper() }}</span>
+                    </td>
+                    <td style="color: var(--color-text-muted);">
+                        {{ doc.formatted_size }}
+                    </td>
+                    <td>
+                        {% if doc.processing_status == 'processed' %}
+                            <span class="status-badge badge-completed">Extracted</span>
+                        {% else %}
+                            <span class="status-badge badge-pending">{{ doc.processing_status }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="color: var(--color-text-muted);">
+                        {{ doc.upload_date.strftime('%b %d, %Y %H:%M') }}
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: inline-flex; gap: 6px;">
+                            <a href="{{ url_for('documents.details', document_id=doc.id) }}" class="btn btn-secondary btn-sm">
+                                Details
+                            </a>
+                            {% if doc.document_type == 'submitted' %}
+                            <form action="{{ url_for('analysis.run_analysis', document_id=doc.id) }}" method="POST" style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-primary btn-sm" title="Run similarity analysis">
+                                    Check
+                                </button>
+                            </form>
+                            {% endif %}
+                            <form action="{{ url_for('documents.delete_document', document_id=doc.id) }}" method="POST" style="display: inline;" data-confirm="Are you sure you want to permanently delete '{{ doc.original_filename }}'?">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-danger btn-sm" title="Delete document">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination and pagination.pages > 1 %}
+    <div style="padding: 12px 18px; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--color-text-muted);">
+        <span>Showing page {{ pagination.page }} of {{ pagination.pages }} ({{ pagination.total }} items)</span>
+        <div style="display: flex; gap: 6px;">
+            {% if pagination.has_prev %}
+                <a href="{{ url_for('documents.index', page=pagination.prev_num, category=category, type=file_type, sort=sort_by, search=search_query) }}" class="btn btn-secondary btn-sm">&larr; Previous</a>
+            {% endif %}
+            {% if pagination.has_next %}
+                <a href="{{ url_for('documents.index', page=pagination.next_num, category=category, type=file_type, sort=sort_by, search=search_query) }}" class="btn btn-secondary btn-sm">Next &rarr;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state-panel">
+        <div class="empty-icon-wrap">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+        </div>
+        <h3 class="empty-title">No Documents Found</h3>
+        <p class="empty-desc">
+            {% if search_query %}
+                No documents match the search criteria "{{ search_query }}".
+            {% else %}
+                No documents have been uploaded in this category yet.
+            {% endif %}
+        </p>
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ url_for('analysis.upload') }}" class="btn btn-primary btn-sm">Upload Document</a>
+            {% if search_query or file_type != 'all' %}
+                <a href="{{ url_for('documents.index') }}" class="btn btn-secondary btn-sm">Clear Filters</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

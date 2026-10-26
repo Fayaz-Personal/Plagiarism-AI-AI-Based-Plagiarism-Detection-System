@@ -1,0 +1,3 @@
+# Ignore files in reports but keep folder
+*
+!.gitkeep

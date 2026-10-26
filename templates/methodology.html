@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Methodology &amp; Architecture{% endblock %}
+{% block breadcrumb %}Methodology &amp; Architecture{% endblock %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 0 auto;">
+    <!-- Page Header -->
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-title">Methodology &amp; Architecture</h1>
+            <p class="page-subtitle">Detection Methodology, vector space formulation, and academic verification standards.</p>
+        </div>
+    </div>
+
+    <!-- System Architecture Pipeline Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    System Processing Pipeline
+                </h2>
+                <p class="panel-subtitle">Multi-stage document ingestion and mathematical comparison workflow</p>
+            </div>
+        </div>
+
+        <div class="panel-body">
+            <div style="background-color: #fafbfc; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 18px 22px; font-family: var(--font-family-mono); font-size: 12.5px; line-height: 1.7; color: var(--color-text-primary); margin-bottom: 16px;">
+                1. Document Ingestion (PDF / Word .docx / Plain Text .txt)<br>
+                &nbsp;&nbsp;&nbsp;&bull; SHA-256 cryptographic digest calculation for duplicate prevention<br>
+                &nbsp;&nbsp;&nbsp;&bull; Format parsing and text stream extraction<br>
+                2. Unicode NFKC Normalization &amp; Tokenization<br>
+                &nbsp;&nbsp;&nbsp;&bull; Standardization of curved quotes, dashes, hyphens, and whitespace<br>
+                3. Sentence Segmentation with Abbreviation Masking<br>
+                &nbsp;&nbsp;&nbsp;&bull; Boundary detection protecting academic abbreviations (e.g., i.e., Dr., prof., al.)<br>
+                4. Vector Space Representation (TF-IDF)<br>
+                &nbsp;&nbsp;&nbsp;&bull; Sublinear term weighting across shared comparison corpus (unigrams + bigrams)<br>
+                5. High-Dimensional Cosine Similarity Matrix Evaluation<br>
+                &nbsp;&nbsp;&nbsp;&bull; Angle calculation invariant to document length<br>
+                6. Granular Sentence-Level Alignment (&ge; 0.70)<br>
+                &nbsp;&nbsp;&nbsp;&bull; SequenceMatcher token diffing for word-level overlap highlighting<br>
+                7. Academic Aggregation &amp; PDF Report Compilation
+            </div>
+        </div>
+    </div>
+
+    <!-- Mathematical Formulations Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <div>
+                <h2 class="panel-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    Mathematical Formulations
+                </h2>
+                <p class="panel-subtitle">Algorithmic metrics utilized in similarity scoring</p>
+            </div>
+        </div>
+
+        <div class="panel-body" style="display: flex; flex-direction: column; gap: 22px;">
+            <!-- 1. TF-IDF -->
+            <div style="border-left: 3px solid var(--color-primary-navy); padding-left: 16px;">
+                <h3 style="font-size: 14px; font-weight: 700; color: var(--color-primary-navy);">1. TF-IDF (Term Frequency &ndash; Inverse Document Frequency)</h3>
+                <p style="font-size: 13px; color: var(--color-text-secondary); margin: 6px 0 10px;">
+                    TF-IDF evaluates the relative information value of vocabulary words in a submitted paper compared to the reference corpus. Informative technical terms receive higher weights, while common stop words are discounted.
+                </p>
+                <div style="background-color: var(--color-bg-subtle); padding: 10px 16px; border-radius: var(--radius-sm); font-family: var(--font-family-mono); font-size: 12.5px; border: 1px solid var(--color-border);">
+                    TF-IDF(t, d, D) = (1 + ln(count(t, d))) &times; [ln((1 + |D|) / (1 + df(t))) + 1]
+                </div>
+            </div>
+
+            <!-- 2. Cosine Similarity -->
+            <div style="border-left: 3px solid var(--color-primary-navy); padding-left: 16px;">
+                <h3 style="font-size: 14px; font-weight: 700; color: var(--color-primary-navy);">2. Cosine Similarity in Euclidean Vector Space</h3>
+                <p style="font-size: 13px; color: var(--color-text-secondary); margin: 6px 0 10px;">
+                    Measures the cosine of the angle between two sparse TF-IDF vectors. Because it computes vector angles rather than Euclidean distances, score accuracy is independent of document length.
+                </p>
+                <div style="background-color: var(--color-bg-subtle); padding: 10px 16px; border-radius: var(--radius-sm); font-family: var(--font-family-mono); font-size: 12.5px; border: 1px solid var(--color-border);">
+                    Cosine Similarity(&#x2192;u, &#x2192;v) = (&#x2192;u &bull; &#x2192;v) / (||&#x2192;u|| &times; ||&#x2192;v||) = (&sum; u<sub>k</sub> v<sub>k</sub>) / [sqrt(&sum; u<sub>k</sub><sup>2</sup>) &times; sqrt(&sum; v<sub>k</sub><sup>2</sup>)]
+                </div>
+            </div>
+
+            <!-- 3. Text Coverage -->
+            <div style="border-left: 3px solid var(--color-primary-navy); padding-left: 16px;">
+                <h3 style="font-size: 14px; font-weight: 700; color: var(--color-primary-navy);">3. Deduplicated Text Coverage</h3>
+                <p style="font-size: 13px; color: var(--color-text-secondary); margin: 6px 0 10px;">
+                    Calculates the proportion of the submitted paper composed of flagged sentences, deduplicated across reference documents.
+                </p>
+                <div style="background-color: var(--color-bg-subtle); padding: 10px 16px; border-radius: var(--radius-sm); font-family: var(--font-family-mono); font-size: 12.5px; border: 1px solid var(--color-border);">
+                    Coverage (%) = [&sum; Length(s) for s &isin; UniqueMatchedSentences / &sum; Length(s) for s &isin; AllSubmittedSentences] &times; 100
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Academic Integrity Notice Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                Scholarly Standards &amp; Reviewer Obligations
+            </h2>
+        </div>
+
+        <div class="panel-body" style="font-size: 13px; line-height: 1.6; color: var(--color-text-secondary);">
+            <p style="margin-bottom: 12px;">
+                <strong>Similarity scores reflect textual overlap, not authorial intent or academic dishonesty.</strong> An elevated score does not automatically confirm plagiarism. Academic evaluators must inspect flagged passages in context to identify:
+            </p>
+            <ul style="padding-left: 20px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px;">
+                <li><strong>Proper Attribution:</strong> Direct quotations enclosed in quotation marks with scholarly citations.</li>
+                <li><strong>Technical Terminology:</strong> Fixed mathematical or scientific phrases that cannot be meaningfully altered.</li>
+                <li><strong>Methodology Boilerplate:</strong> Common descriptions of standard laboratory instruments or computational tools.</li>
+                <li><strong>Bibliographic References:</strong> Formal reference entries listed according to APA, IEEE, or ACM standards.</li>
+            </ul>
+            <div class="academic-notice" style="margin-bottom: 0;">
+                <strong>Institutional Mandate:</strong> Computational similarity analysis provides supporting data for academic review. Final determinations regarding original scholarship remain the responsibility of qualified human instructors.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
